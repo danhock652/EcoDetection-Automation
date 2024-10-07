@@ -7,11 +7,36 @@ import numpy as np
 import datetime as dt
 import math
 
+
+#This script executes calculations outlined in the CCME (Canadian Council of Ministers of the Environment) WQI methodology.
 #The program will export a cleansed data file with WQI and ratings for the months over the period of measurement. This script can be used to append data from multiple files into the same file.
 #The data can be distinguished through the reference code defined in the file_params variable
 #The file will be exported into the location defined in the 'destination' variable
 #Please note that the ratings for WQI (0-100) are as follows:
 #A - >=95, B - 80-95, C - 65-79, D 45-64, E - 0-44, F = 0 
+
+#This was done through building a 'parent' function which is called cleanse_data. This contains several 'child' functions to execute processes. Below is a list of the function and their purposes 
+
+List of functions 
+
+#  cleanse_data - runs through the process of assigning a monthly WQI to a EcoDetection site using the CCME WQI 
+#  no_total_test - define the number of total tests carried out over the timeline 
+#  no_tests_parameter - defines the number of tests per parameter over the timeline 
+#  no_failed_tests - defines the number of failed tests (ERS exceedances) per parameter over the timeline 
+#  total_failed_tests - defines the total number of failed tests over the timeline 
+#  total_failed_parameters - defines the total number of failed parameters over the timeline
+#  no_total_parameters - defines the total number of parameters that were measured in the timeline 
+#  assign_F1 - Assign the F1 value according to the CCME WQI methodlogy - F1 = (no. failed parameters/no. total parameters)
+#  assign_F2 - Assign the F1 value according to the CCME WQI methodlogy - F2 = (no. failed tests/no. total tests)
+#  assign_F3 - This function is built to assign the F3 value according to the CCME WQI methodology. There are several steps in this function:
+#	  1. Find the excursion (ratio of difference in an out of range (OOR) value
+#	  2. Find the sum of excursion values over each timeline 
+#	  3. Find the average excursion value = sum of excursion/no. total tests (NSE value)
+#	  4. Create F3 value - F3 = NSE/(NSE*0.01+0.01)
+#  This function also incorporates other steps in the process including:
+#	  1. Assigning a grade for each parameter over the timeline - grade score = avg. excursion + ratio of failed tests for the parameter (e.g. 0.03 = 3%)
+#	  2. Find the biggest contributing parameter that affects the WQI by taking the maximum grade score to have the worst contribution to the WQI
+#  assign_WQI - Use F1, F2 and F3 to assign the WQI over each timeline according to the CCME WQI
 
 #Different periods can be analysed if you wish to uncomment the calling of functions within the code calling 'Day', 'Week, 'Season, or 'Year'
 
@@ -34,13 +59,13 @@ file_params=[(r"C:\Users\hockind\Desktop\Hackathon\EcoDetection Data\export-ecod
 
 #Please define the destination where the file should be created and the name of the file to be created. Please see the below example for inspiration.
 
-##destination = r"C:\Users\hockind\Desktop\Hackathon\EcoDetection Data\Manipulated Data tests over 120 parameters over 2.csv"
+##destination = r"C:\Users\hockind\Desktop\Hackathon\EcoDetection Data\Manipulated Data - tests over 120 - parameters over 2.csv"
 
 destination = r"C:\Users\hockind\Desktop\Hackathon\EcoDetection Data\Testing for param grades.csv"
 
-#Define ERS bounds to count no. of failures (take into consideration units of measurement ppb/1000 = mg/l)
+#Define ERS (Environmental Reference Standard) bounds to count no. of failures (take into consideration units of measurement ppb/1000 = mg/l)
 #These are assigned based on the columns in the manipulated data - in this case:
-#[Timestamp, Total Nitrogen Indicator, Total Phosphorous Indicator, Conductivity, Nephelo Turbidity, Oxygen, pH (range)]
+#[Timestamp (keep as NA), Total Nitrogen Indicator, Total Phosphorous Indicator, Conductivity, Nephelo Turbidity, Oxygen (range - calculated at 20 degrees celsius), pH (range)]
 
 tolerance = ['Na',1050,165,2000,15,[5.4,10.1],[6.8,8.0]]
 
@@ -250,7 +275,7 @@ def cleanse_data(data_source,reference,date_format,destination=destination):
 
     #Add no. failed test for each timeline
 
-    def no_failed_tests(timeline):
+    def no_failed_tests_per_parameter(timeline):
 
         no_failed_parameters_timeline = [[0 for j in range(len(data['Failure Index'].values[1]))] for i in range(len(data))]
 
@@ -263,69 +288,69 @@ def cleanse_data(data_source,reference,date_format,destination=destination):
 
         data[f'Failed tests over {timeline}']=no_failed_parameters_timeline
 
-    #no_failed_tests('Day')
-    #no_failed_tests('Week')
-    no_failed_tests('Month')
-    #no_failed_tests('Season')
-    #no_failed_tests('Year')
+    #no_failed_tests_per_parameter('Day')
+    #no_failed_tests_per_parameter('Week')
+    no_failed_tests_per_parameter('Month')
+    #no_failed_tests_per_parameter('Season')
+    #no_failed_tests_per_parameter('Year')
 
     #Evaluate number of failed tests over the timeline
 
 
-    def F2_failed_tests(timeline):
+    def total_failed_tests(timeline):
 
-        F2_list = []
+        total_failures_list = []
         
         for i in range(len(data)):
             if i <= len(data)-2:
                 if data[f'{timeline} Index'].values[i+1]==data[f'{timeline} Index'].values[i]:
-                    F2_list.append(None)
+                    total_failures_list.append(None)
                 else:
                     val = 0
                     for j in range(len(tolerance)-1):
                         val += data[f'Failed tests over {timeline}'].values[i][j]
-                    F2_list.append(val)
+                    total_failures_list.append(val)
             else:
                 val = 0
                 for j in range(len(tolerance)-1):
                     val += data[f'Failed tests over {timeline}'].values[i][j]
-                F2_list.append(val)
+                total_failures_list.append(val)
         
         
-        data[f'No. failed tests over {timeline}']=F2_list
+        data[f'No. failed tests over {timeline}']=total_failures_list
 
-    #F2_failed_tests('Day')
-    #F2_failed_tests('Week')
-    F2_failed_tests('Month')
-    #F2_failed_tests('Season')
-    #F2_failed_tests('Year')
+    #total_failed_tests('Day')
+    #total_failed_tests('Week')
+    total_failed_tests('Month')
+    #total_failed_tests('Season')
+    #total_failed_tests('Year')
 
     #Evaluate number of failed parameters over the timeline
 
 
-    def F1_failed_parameters(timeline):
+    def total_failed_parameters(timeline):
 
-        F1_list = []
+        total_failed_params = []
         
         for i in range(len(data)):
             if i <= len(data)-2:
                 if data[f'{timeline} Index'].values[i+1]==data[f'{timeline} Index'].values[i]:
-                    F1_list.append(None)
+                    total_failed_params.append(None)
                 else:
                     val = np.count_nonzero(data[f'Failed tests over {timeline}'].values[i])
-                    F1_list.append(val)
+                    total_failed_params.append(val)
             else:
                 val = np.count_nonzero(data[f'Failed tests over {timeline}'].values[i])
                 
-                F1_list.append(val)
+                total_failed_params.append(val)
         
-        data[f'No. failed parameters over {timeline}']=F1_list
+        data[f'No. failed parameters over {timeline}']=total_failed_params
 
-    #F1_failed_parameters('Day')
-    #F1_failed_parameters('Week')
-    F1_failed_parameters('Month')
-    #F1_failed_parameters('Season')
-    #F1_failed_parameters('Year')
+    #total_failed_parameters('Day')
+    #total_failed_parameters('Week')
+    total_failed_parameters('Month')
+    #total_failed_parameters('Season')
+    #total_failed_parameters('Year')
 
 
 
@@ -414,7 +439,7 @@ def cleanse_data(data_source,reference,date_format,destination=destination):
     
 
 
-    def assign_exc(timeline):
+    def assign_F3(timeline):
 
     #First find excursion for every OOR value
         excursion_values=[[] for i in range(len(data))]
@@ -570,11 +595,11 @@ def cleanse_data(data_source,reference,date_format,destination=destination):
 
         return data
         
-    #assign_exc('Day')
-    #assign_exc('Week')
-    assign_exc('Month')
-    #assign_exc('Season')
-    #assign_exc('Year')
+    #assign_F3('Day')
+    #assign_F3('Week')
+    assign_F3('Month')
+    #assign_F3('Season')
+    #assign_F3('Year')
 
     #Build function to assign WQI over every timeline
 
