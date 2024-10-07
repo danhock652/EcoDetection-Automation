@@ -17,7 +17,7 @@ import math
 
 #This was done through building a 'parent' function which is called cleanse_data. This contains several 'child' functions to execute processes. Below is a list of the function and their purposes 
 
-List of functions 
+#List of functions 
 
 #  cleanse_data - runs through the process of assigning a monthly WQI to a EcoDetection site using the CCME WQI 
 #  no_total_test - define the number of total tests carried out over the timeline 
