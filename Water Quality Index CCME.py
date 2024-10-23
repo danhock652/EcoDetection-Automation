@@ -80,7 +80,7 @@ def cleanse_data(data_source,reference,date_format,destination=destination):
 
     os.chdir('..')
 
-    os.chdir(data_source1[-2])
+    os.chdir(f"./{data_source1[-2]}")
 
     #Read in data from csv
         
