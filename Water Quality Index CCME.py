@@ -79,9 +79,9 @@ def cleanse_data(data_source,reference,date_format,destination=destination):
 
     data_source1 = data_source.split('\\')
 
-    os.chdir('..')
+    file_name = data_source1.pop()
 
-    os.chdir(f"./{data_source1[-2]}")
+    os.chdir("/".join(data_source1))
 
     #Read in data from csv
         
