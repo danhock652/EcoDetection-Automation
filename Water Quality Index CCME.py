@@ -40,6 +40,7 @@ import math
 
 #Different periods can be analysed if you wish to uncomment the calling of functions within the code calling 'Day', 'Week, 'Season, or 'Year'
 
+#Ensure that the folder that your data is in, is at the same hierarchical level as the folder that the code is in e.g. C:\Users\hockind\Desktop\Hackathon\EcoDetection Data\ and C:\Users\hockind\Desktop\Hackathon\Code\
 
 #Please define the files, reference code and date format in accordance with the below example. (List of tuples - (file path, reference code, date format))
 #See the examples below for some inspiration on date formatting!
