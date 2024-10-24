@@ -73,19 +73,11 @@ tolerance = ['Na',1050,165,2000,15,[5.4,10.1],[6.8,8.0]]
 
 def cleanse_data(data_source,reference,date_format,destination=destination):
 
-    
 
-    #Change working directory
-
-    data_source1 = data_source.split('\\')
-
-    file_name = data_source1.pop()
-
-    os.chdir("/".join(data_source1))
 
     #Read in data from csv
         
-    data = pd.read_csv(data_source1[-1])
+    data = pd.read_csv(data_source)
         
     #Create list of headers to be used instead of existing arbitrary codes
 
